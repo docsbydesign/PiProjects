@@ -125,7 +125,7 @@ def publish_message (button):
 
     message = "{} [{}]".format(args.message, publish_count)
     print("Publishing message to topic '{}': {}".format(args.topic, message))
-    msg_topic=args.topic + "/" + button.pin
+    msg_topic=args.topic + "/" + str(button.pin)
     mqtt_connection.publish(
         topic=msg_topic,
         payload=message,
@@ -186,18 +186,7 @@ if __name__ == '__main__':
     print("Connected!")
 
     # Subscribe
-    subscribe_to_local_topic(args, red_btn.pin)
-
-    '''
-    print("Subscribing to topic '{}'...".format(args.topic))
-    subscribe_future, packet_id = mqtt_connection.subscribe(
-        topic=args.topic,
-        qos=mqtt.QoS.AT_LEAST_ONCE,
-        callback=on_message_received)
-
-    subscribe_result = subscribe_future.result()
-    print("Subscribed with {}".format(str(subscribe_result['qos'])))
-    '''
+    subscribe_to_local_topic(args, str(red_btn.pin))
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
@@ -211,6 +200,8 @@ if __name__ == '__main__':
         publish_count = 1
 
         red_btn.when_pressed = publish_message
+        grn_btn.when_pressed = publish_message
+        blu_btn.when_pressed = publish_message
         while (publish_count <= args.count) or (args.count == 0):
             # the publish count should update asynchronously while sleeping.
             time.sleep(2)
