@@ -99,6 +99,8 @@ def subscribe_to_local_topic(args, local_topic):
         topic=sub_topic,
         qos=mqtt.QoS.AT_LEAST_ONCE,
         callback=on_message_received)
+    subscribe_result = subscribe_future.result()
+    print("Subscribed with {}".format(str(subscribe_result['qos'])))
 
 
 # Callback when the subscribed topic receives a message
@@ -192,9 +194,10 @@ if __name__ == '__main__':
         topic=args.topic,
         qos=mqtt.QoS.AT_LEAST_ONCE,
         callback=on_message_received)
-    '''
+
     subscribe_result = subscribe_future.result()
     print("Subscribed with {}".format(str(subscribe_result['qos'])))
+    '''
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
