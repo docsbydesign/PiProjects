@@ -191,7 +191,7 @@ if __name__ == '__main__':
         publish_count = 1
         red_btn.when_pressed = publish_mesasage (args, mqtt_connection, "Red")
         while (publish_count <= args.count) or (args.count == 0):
-            publish_mesasage (args, mqtt_connection)
+            # the publish count should update asynchronously while sleeping.
             time.sleep(2)
 
     # Wait for all messages to be received.
