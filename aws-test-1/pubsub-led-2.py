@@ -187,6 +187,8 @@ if __name__ == '__main__':
 
     # Subscribe
     subscribe_to_local_topic(args, str(red_btn.pin))
+    subscribe_to_local_topic(args, str(grn_btn.pin))
+    subscribe_to_local_topic(args, str(blu_btn.pin))
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.
