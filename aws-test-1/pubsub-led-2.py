@@ -118,6 +118,10 @@ def on_message_received(topic, payload, **kwargs):
         received_all_event.set()
 
 def publish_message (button):
+    # this is the button press handler
+    #   the GPIO library send this handler the button object
+    #   of the button that fired it off.
+    #   https://gpiozero.readthedocs.io/en/stable/api_input.html#button
     global args
     global red_led
     global publish_count
@@ -185,7 +189,7 @@ if __name__ == '__main__':
     connect_future.result()
     print("Connected!")
 
-    # Subscribe
+    # Subscribe to all the button messages
     subscribe_to_local_topic(args, str(red_btn.pin))
     subscribe_to_local_topic(args, str(grn_btn.pin))
     subscribe_to_local_topic(args, str(blu_btn.pin))
@@ -199,11 +203,13 @@ if __name__ == '__main__':
         else:
             print ("Sending {} message(s)".format(args.count))
 
-        publish_count = 1
-
+        # assign button press handlers
         red_btn.when_pressed = publish_message
         grn_btn.when_pressed = publish_message
         blu_btn.when_pressed = publish_message
+
+        # loop to check publish count progress
+        publish_count = 1
         while (publish_count <= args.count) or (args.count == 0):
             # the publish count should update asynchronously while sleeping.
             time.sleep(2)
