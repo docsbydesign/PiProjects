@@ -98,8 +98,7 @@ def on_message_received(topic, payload, **kwargs):
 
     #toggle LED
     global grn_led
-
-    grn_led.toggle(0.3,0.3,1)
+    grn_led.blink(0.3,0.2,1,True)
 
     if received_count == args.count:
         received_all_event.set()
@@ -109,11 +108,6 @@ if __name__ == '__main__':
     event_loop_group = io.EventLoopGroup(1)
     host_resolver = io.DefaultHostResolver(event_loop_group)
     client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
-
-    # intialize LEDs
-    global red_led
-    global grn_led
-    global blu_led
 
     red_led.off()
     grn_led.off()
@@ -187,8 +181,8 @@ if __name__ == '__main__':
                 topic=args.topic,
                 payload=message,
                 qos=mqtt.QoS.AT_LEAST_ONCE)
-            red_led.toggle(0.3,0.3,1)
-            time.sleep(2)
+            red_led.blink(0.3,0.2,1,False)
+            time.sleep(1)
             publish_count += 1
 
     # Wait for all messages to be received.
