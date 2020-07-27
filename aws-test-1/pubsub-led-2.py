@@ -90,6 +90,17 @@ def on_resubscribe_complete(resubscribe_future):
                 sys.exit("Server rejected resubscribe to topic: {}".format(topic))
 
 
+def subscribe_to_local_topic(args, local_topic):
+    # Subscribe
+    sub_topic = "{}/{}".format(args.topic,local_topic)
+    #print("Subscribing to topic '{}'...".format(args.topic))
+    print("Subscribing to topic '{}'...".format(sub_topic))
+    subscribe_future, packet_id = mqtt_connection.subscribe(
+        topic=args.sub_topic,
+        qos=mqtt.QoS.AT_LEAST_ONCE,
+        callback=on_message_received)
+
+
 # Callback when the subscribed topic receives a message
 def on_message_received(topic, payload, **kwargs):
     print("Received message from topic '{}': {}".format(topic, payload))
@@ -173,12 +184,15 @@ if __name__ == '__main__':
     print("Connected!")
 
     # Subscribe
+    subscribe_to_local_topic(args, "red")
+
+    '''
     print("Subscribing to topic '{}'...".format(args.topic))
     subscribe_future, packet_id = mqtt_connection.subscribe(
         topic=args.topic,
         qos=mqtt.QoS.AT_LEAST_ONCE,
         callback=on_message_received)
-
+    '''
     subscribe_result = subscribe_future.result()
     print("Subscribed with {}".format(str(subscribe_result['qos'])))
 
