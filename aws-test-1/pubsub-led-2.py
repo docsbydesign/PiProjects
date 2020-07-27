@@ -117,7 +117,7 @@ def on_message_received(topic, payload, **kwargs):
     if received_count == args.count:
         received_all_event.set()
 
-def publish_message (btn_id):
+def publish_message (button):
     global args
     global red_led
     global publish_count
@@ -125,7 +125,7 @@ def publish_message (btn_id):
 
     message = "{} [{}]".format(args.message, publish_count)
     print("Publishing message to topic '{}': {}".format(args.topic, message))
-    msg_topic=args.topic + "/" + btn_id
+    msg_topic=args.topic + "/" + button.pin
     mqtt_connection.publish(
         topic=msg_topic,
         payload=message,
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     print("Connected!")
 
     # Subscribe
-    subscribe_to_local_topic(args, "red")
+    subscribe_to_local_topic(args, red_btn.pin)
 
     '''
     print("Subscribing to topic '{}'...".format(args.topic))
@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
         publish_count = 1
 
-        red_btn.when_pressed = publish_message("red")
+        red_btn.when_pressed = publish_message
         while (publish_count <= args.count) or (args.count == 0):
             # the publish count should update asynchronously while sleeping.
             time.sleep(2)
