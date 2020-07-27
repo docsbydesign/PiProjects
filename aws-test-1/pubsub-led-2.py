@@ -56,8 +56,7 @@ grn_btn = Button(6)
 blu_btn = Button(13)
 
 # Using globals to simplify sample code
-args = parser.parse_
-()
+args = parser.parse_args()
 
 io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
