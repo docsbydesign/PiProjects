@@ -51,9 +51,9 @@ grn_led = LED(20)
 blu_led = LED(21)
 
 #initialize buttons
-red_btn = Button(5)
-grn_btn = Button(6)
-blu_btn = Button(13)
+red_btn = Button(5, bounce_time=0.1)
+grn_btn = Button(6, bounce_time=0.1)
+blu_btn = Button(13, bounce_time=0.1)
 
 # Using globals to simplify sample code
 args = parser.parse_args()
