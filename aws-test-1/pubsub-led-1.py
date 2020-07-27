@@ -46,6 +46,10 @@ parser.add_argument('--verbosity', choices=[x.name for x in io.LogLevel], defaul
     help='Logging level')
 
 # intialize LEDs
+global red_led
+global grn_led
+global blu_led
+
 red_led = LED(16)
 grn_led = LED(20)
 blu_led = LED(21)
