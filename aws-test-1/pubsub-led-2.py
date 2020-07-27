@@ -104,14 +104,16 @@ def on_message_received(topic, payload, **kwargs):
     if received_count == args.count:
         received_all_event.set()
 
-def publish_message (publish_info):
+def publish_message (btn_id):
+    global args
     global red_led
     global publish_count
-    args = publish_info["args"]
+    global mqtt_connection
+
     message = "{} [{}]".format(args.message, publish_count)
     print("Publishing message to topic '{}': {}".format(args.topic, message))
-    msg_topic=args.topic + "/" + publish_info["btn_id"]
-    publish_info["connection"].publish(
+    msg_topic=args.topic + "/" + btn_id
+    mqtt_connection.publish(
         topic=msg_topic,
         payload=message,
         qos=mqtt.QoS.AT_LEAST_ONCE)
