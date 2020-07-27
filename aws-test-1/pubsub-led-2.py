@@ -104,13 +104,14 @@ def on_message_received(topic, payload, **kwargs):
     if received_count == args.count:
         received_all_event.set()
 
-def publish_mesasage (args, mqtt_connection, btn_id):
+def publish_message (publish_info):
     global red_led
     global publish_count
+    args = publish_info["args"]
     message = "{} [{}]".format(args.message, publish_count)
     print("Publishing message to topic '{}': {}".format(args.topic, message))
-    msg_topic=args.topic + "/" + btn_id
-    mqtt_connection.publish(
+    msg_topic=args.topic + "/" + publish_info["btn_id"]
+    publish_info["connection"].publish(
         topic=msg_topic,
         payload=message,
         qos=mqtt.QoS.AT_LEAST_ONCE)
@@ -189,7 +190,13 @@ if __name__ == '__main__':
             print ("Sending {} message(s)".format(args.count))
 
         publish_count = 1
-        red_btn.when_pressed = publish_mesasage (args, mqtt_connection, "Red")
+
+        publish_info =	{
+          "args": args,
+          "connection": mqtt_connection,
+          "btn_id": "red"
+        }
+        red_btn.when_pressed = publish_message(publish_info)
         while (publish_count <= args.count) or (args.count == 0):
             # the publish count should update asynchronously while sleeping.
             time.sleep(2)
