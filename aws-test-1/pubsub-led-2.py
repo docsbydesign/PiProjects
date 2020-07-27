@@ -46,16 +46,18 @@ parser.add_argument('--verbosity', choices=[x.name for x in io.LogLevel], defaul
     help='Logging level')
 
 # intialize LEDs
-global red_led
-global grn_led
-global blu_led
-
 red_led = LED(16)
 grn_led = LED(20)
 blu_led = LED(21)
 
+#initialize buttons
+red_btn = Button(5)
+grn_btn = Button(6)
+blu_btn = Button(13)
+
 # Using globals to simplify sample code
-args = parser.parse_args()
+args = parser.parse_
+()
 
 io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
@@ -103,15 +105,18 @@ def on_message_received(topic, payload, **kwargs):
     if received_count == args.count:
         received_all_event.set()
 
-def publish_mesasage (args, mqtt_connection):
+def publish_mesasage (args, mqtt_connection, btn_id):
     global red_led
+    global publish_count
     message = "{} [{}]".format(args.message, publish_count)
     print("Publishing message to topic '{}': {}".format(args.topic, message))
+    msg_topic=args.topic + "/" + btn_id
     mqtt_connection.publish(
-        topic=args.topic,
+        topic=msg_topic,
         payload=message,
         qos=mqtt.QoS.AT_LEAST_ONCE)
     red_led.blink(0.3,0.2,1,False)
+    publish_count += 1
 
 
 if __name__ == '__main__':
@@ -185,10 +190,10 @@ if __name__ == '__main__':
             print ("Sending {} message(s)".format(args.count))
 
         publish_count = 1
+        red_btn.when_pressed = publish_mesasage (args, mqtt_connection, "Red")
         while (publish_count <= args.count) or (args.count == 0):
             publish_mesasage (args, mqtt_connection)
             time.sleep(2)
-            publish_count += 1
 
     # Wait for all messages to be received.
     # This waits forever if count was set to 0.
