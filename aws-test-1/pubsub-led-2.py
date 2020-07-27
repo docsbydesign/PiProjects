@@ -96,7 +96,7 @@ def subscribe_to_local_topic(args, local_topic):
     #print("Subscribing to topic '{}'...".format(args.topic))
     print("Subscribing to topic '{}'...".format(sub_topic))
     subscribe_future, packet_id = mqtt_connection.subscribe(
-        topic=args.sub_topic,
+        topic=sub_topic,
         qos=mqtt.QoS.AT_LEAST_ONCE,
         callback=on_message_received)
 
