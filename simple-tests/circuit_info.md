@@ -14,5 +14,6 @@ Blue | GPIO-21 (O) | 40
 
 Ground to breadboard from pin-34 of 40-pin connector.
 
-active lo = when signal as active, terminal voltage is low: 0v (ground).
-active hi = when signal is active, terminal voltage is high: 3.3v. 
+**active lo** means when signal as active, terminal voltage is low: 0v (ground).
+
+**active hi** means when signal is active, terminal voltage is high: 3.3v.
