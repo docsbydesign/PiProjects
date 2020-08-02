@@ -1,0 +1,229 @@
+Describes how to configure the pi for these exercises.
+
+Instructions updated for 2020-05-27 release of Raspberry Pi OS (32-bit)
+  with desktop but no extra apps
+
+   This process can take from 60-90 minutes to complete.
+
+For ease of copying the base image to save having to repeat this process
+every time you want to reload the SD card:
+  1. Install and configure this software as described below
+      on an 8-GB MicroSD card.
+  2. Save the image of the MicroSD card as an .img file.
+  3. Load the image on to a high-speed 32GB (or larger) microSD card.
+  4. After booting from the new MicroSD card, run raspi-config and
+       in Advanced Options, select option A1 to make the entire SD card
+       available to the OS.
+   5. The system should be ready to run normally after that.
+
+1. Download the Raspberry Pi OS imager and load the current OS with desktop
+    (NOT the OS with desktop and recommended software) on to your microSD card.
+
+2. Install the microSD card and start the Pi.
+
+3. Walk through initialization wizard
+    The entries in parenthesis are those that I use, but you can set them
+    to a value that's more apprproiate for your installation if necessary.
+	Set Country
+			Country: (United States)
+			Language: (American English)
+			Timezone: (America/Los_Angeles)
+
+	Change Password
+		Set a new default pi account password
+
+	Select WiFi Network
+		Select as appropriate, if not connected to a hardwire LAN connection
+
+	Check for Updates
+		Click skip (or you'll be sorry...)
+    We'll run the update shortly
+
+	After this, the pi will reboot to the desktop.
+
+4. In a terminal window. Remove some unused software before continuing.
+    sudo apt-get purge dillo
+    sudo apt-get clean
+    sudo apt-get autoremove
+    sudo shutdown -r 0
+
+5. In a terminal window update the OS.
+  sudo apt-get update
+  sudo apt-get upgrade
+  sudo apt-get clean
+  sudo apt-get autoremove
+  sudo shutdown -r 0
+
+5. Open config.txt by entering:
+    sudo nano /boot/config.txt
+  and change/uncomment, or add if not present, these config parameters
+      disable_overscan=1
+			hdmi_group=1
+			hdmi_mode=16
+      hdmi_blanking=1
+      hdmi_drive=2
+
+  exit and save (ctrl-x, Y), and then restart the system
+  sudo shutdown -r 0
+
+6. configure the basic PI settings
+   In the desktop, open Raspberry Pi Configuration from the Preferences menu and
+   review each of the pages.
+     SYSTEM page
+		   Hostname: (as desired to keep track of multiple systems on the same network)
+       Auto Login: uncheck Login as user 'pi'
+     INTERFACES page
+       enable these and leave the others disabled unless needed for your configuration
+         SPI
+         I2C
+     PERFORMANCE page
+       leave as default
+     LOCALISATION
+	      (confirm, these should be configured at initial boot)
+     LOCALE: en-US, UTF-8
+	     TIMEZONE
+			  (confirm, these should be configured at initial boot)
+	       your local timezone (e.g. AMERICA/New_York for Eastern time
+	     KEYBOARD
+			  (confirm, these should be configured at initial boot)
+	       as desired: (e.g. United States, English)
+		  WiFi COUNTRY:
+			  (confirm, these should be configured at initial boot)
+
+7. Turn off bluetooth from the icon in the system menu bar.
+8. Turn off wifi, if using a hardwire LAN connection
+9. Save changes and restart.
+    sudo shutdown -r 0
+
+    # *************************************************************************
+    #		At this point the basic OS has been configured for the hardware
+    # *************************************************************************
+10. install basic system software
+    sudo apt-get -y install nload
+    sudo apt-get -y install exfat-fuse exfat-utils
+    sudo apt-get -y install apache2 apache2-doc libapache2-mod-php
+    sudo apt-get -y install libapache2-mod-php7.3 php7.3-common php7.3-fpm php7.3-mysql php7.3
+
+11. Run these from the superuser (su) account by entering:
+      sudo su
+    before running these commands. If you're running from a su account, you
+    can omit the "sudo" from each command in this section.)
+
+12. (su) Create a php info page
+      echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php
+
+13. (su) Set file permissions to let apache show the file.
+      chown www-data:www-data /var/www/html/phpinfo.php
+      chmod 750 /var/www/html/phpinfo.php
+
+14. (su) Check the Pi's web server by opening http://localhost in the browser. You
+    should see the default Apache page.
+
+15. (su) These commands install the Raspian version of mysql, a.k.a. mariadb
+      apt-get -y install mariadb-server-10.0
+      apt-get -y install mariadb-client-10.0
+
+16. (su) Set mysql password
+    (instructions adaped from: https://www.digitalocean.com/community/tutorials/how-to-reset-your-mysql-or-mariadb-root-password)
+      systemctl stop mysql
+      mysqld_safe --skip-grant-tables --skip-networking &
+      mysql -u root
+    In mysql, change new_password to your new root password.
+        FLUSH PRIVILEGES;
+
+    Create an admin password (I've had better luck with this than using "root"
+      to provide root user access to administer the database).
+    Replace 'your_new_password' with your own password.
+        CREATE USER 'admin'@'localhost' IDENTIFIED BY 'your_new_password';
+        GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost';
+        EXIT
+
+17. (su) Restart the system.
+      shutdown -r 0
+
+18. Test the new MySQL password
+      mysql -u admin -p
+
+    This should prompt you for the password.
+  	Enter the one you just assigned above and you should get the MariaDB [(none)]> prompt.
+    	If it works, exit and continue
+  	If not, try to reassign the password from step 16 and try again.
+
+19. Install phpmyadmin to provide access to the databases
+     Let phpmyadmin create a random password for its mysql access
+     You'll use the admin account created earlier to log in to PhpMyAdmin
+
+      sudo apt-get -y install phpmyadmin
+
+20. Verify the phpmyadmin installation by opening the Raspberry Pi's web browser
+    and navigating to http://localhost/phpmyadmin. Log in with the admin account
+    and the password you created in step 16.
+
+21.	Restart the system
+      sudo shutdown -r 0
+
+22. After it restarts, open the Pi's web browser and test these pages:
+  		Check Apache: 	open http://localhost in a browser and make sure it displays the default page
+  		Check PHP: 		open http://localhost/phpinfo.php to make sure it displays info about PHP
+  		Check PhpMyAdmin (if installed) open and log into: http://localhost/phpmyadmin
+    If they all open without error, continue. Otherwise, try to troubleshoot
+    the errors before continuing.
+
+23. Update the packages & restart (this can take up to 20 minutes)
+      sudo su
+      apt-get update
+      apt-get upgrade
+      apt-get clean
+      apt-get autoremove
+      shutdown -r 0
+
+24. Configure PHP.
+      review timezone strings from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      and pick the correct one for the system's location.
+
+      edit the PHP ini file and change these settings on all configurations
+        sudo nano /etc/php/7.3/apache2/php.ini
+      review these settings:
+       		memory_limit = 512M
+       		date.timezone = <insert a standard UNIX timezone string>
+                             see the wikipedia link above, such as
+                                 America/Los_Angeles for Pacific time
+                                 America/New_York for Eastern time
+
+      change these settings if you are configuring a development system
+
+         display_errors = On
+         display_startup_errors = On
+
+      save changes
+
+25. Restart apache
+      sudo systemctl restart apache2
+
+26. In the Raspberry Pi's web browser, open  http://localhost/phpinfo.php
+      to make sure the settings you updated have the values
+
+27. Install AWS IoT Device SDK for Python (V2) as described in the readme.md at
+      https://github.com/aws/aws-iot-device-sdk-python-v2
+
+        cd ~
+        pip3 install awsiotsdk
+        git clone https://github.com/aws/aws-iot-device-sdk-python-v2.git
+
+28. Install the AWS CLI
+        cd ~
+        pip3 install awscli
+        sudo shutdown -r 0
+
+29. Configure the AWS CLI with your AWS credentials. you'll need your AWS access
+      keys for this step.
+        aws configure
+          AWS Access Key ID [*************EXAMPLE]:
+          AWS Secret Access Key [*************EXAMPLE]:
+          Default region name [EXAMPLE]:
+          Default output format [none]: json
+
+30. Find your AWS IoT endpoint
+        aws iot describe-endpoint --endpoint-type IOT:Data-ATS
+
+    If you get a web host address, the everything is working.
