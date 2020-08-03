@@ -69,7 +69,7 @@ def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
     if initial_state not in LED_STATES:
         initial_state = LED_OFF
     # create LED object
-    led_object = LED(gpio_led_pin, active_high=True, initial_value=initial_state))
+    led_object = LED(gpio_led_pin, True, initial_state))
     # initialize the dictionary for this LED
     new_led = {
         "led_pin": gpio_led_pin,
