@@ -207,7 +207,6 @@ if __name__ == '__main__':
         "Green": device_leds["Green"]["state"],
         "Blue": device_leds["Blue"]["state"]
     }
-    print (json.dumps(device_leds, sort_keys=True, indent=4))
 
     if args.use_websocket == True:
         proxy_options = None
