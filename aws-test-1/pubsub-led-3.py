@@ -84,13 +84,13 @@ def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
 def set_led(btn_name):
     global device_leds
     for d_led in device_leds:
-        if d_led["btn_name"] == btn_name:
-            d_led["led"].value = True
-            d_led["state"] = d_led["led"].value
+        if device_leds[d_led]["btn_name"] == btn_name:
+            device_leds[d_led]["led"].value = True
+            device_leds[d_led]["state"] = device_leds[d_led]["led"].value
         else:
             # turn off all other LEDs
-            d_led["led"].value = False
-            d_led["state"] = d_led["led"].value
+            device_leds[d_led]["led"].value = False
+            device_leds[d_led]["state"] = device_leds[d_led]["led"].value
     return None
 
 
@@ -207,6 +207,7 @@ if __name__ == '__main__':
         "Green": device_leds["Green"]["state"],
         "Blue": device_leds["Blue"]["state"]
     }
+    print (json.dumps(device_leds, sort_keys=True, indent=4))
 
     if args.use_websocket == True:
         proxy_options = None
