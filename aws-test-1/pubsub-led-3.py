@@ -149,7 +149,7 @@ def on_message_received(topic, payload, **kwargs):
     global device_leds
 
     # get the button ID from the topic
-    topic_elems = split(topic,"/")
+    topic_elems = topic.split("/")
     topic_btn = topic_elems[len(topic_elems)-1] # last element in topic
     # read the message to get the current button state
     payload_data = json.loads(payload)
