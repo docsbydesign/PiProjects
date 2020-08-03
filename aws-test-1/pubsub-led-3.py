@@ -87,7 +87,7 @@ def set_led(btn_name):
         if d_led["btn_name"] == btn_name:
             d_led["led"].value = True
             d_led["state"] = d_led["led"].value
-        else
+        else:
             # turn off all other LEDs
             d_led["led"].value = False
             d_led["state"] = d_led["led"].value
