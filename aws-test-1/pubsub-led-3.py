@@ -62,11 +62,11 @@ received_count = 0
 received_all_event = threading.Event()
 
 def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
-    if gpio_led_pin NOT IN GPIO_LED_PINS:
+    if gpio_led_pin not in GPIO_LED_PINS:
         return None
-    if color NOT IN LED_COLORS:
+    if color not in LED_COLORS:
         return None
-    if initial_state NOT IN LED_STATES:
+    if initial_state not in LED_STATES:
         initial_state = LED_OFF
     # create LED object
     led_object = LED(gpio_led_pin, active_high=True, initial_value=initial_state))
