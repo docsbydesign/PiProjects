@@ -62,6 +62,9 @@ received_count = 0
 received_all_event = threading.Event()
 
 def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
+    #
+    #   Create and initialize an LED object and its local metadata
+    #
     if gpio_led_pin not in GPIO_LED_PINS:
         return None
     if color not in LED_COLORS:
@@ -82,6 +85,9 @@ def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
     return new_led
 
 def set_led(btn_name):
+    #
+    #   Light the specified LED and turn off the others
+    #
     global device_leds
     for d_led in device_leds:
         if device_leds[d_led]["btn_name"] == btn_name:
@@ -95,6 +101,9 @@ def set_led(btn_name):
 
 
 def update_device_state():
+    #
+    #   Sync the local device state with that of the LEDs
+    #
     global device_state
     device_state["Red"] = device_leds["Red"]["state"]
     device_state["Green"] = device_leds["Green"]["state"]
@@ -130,9 +139,10 @@ def on_resubscribe_complete(resubscribe_future):
 
 
 def subscribe_to_local_topic(args, local_topic):
-    # Subscribe
+    #
+    # Subscribe to the specified local_topic (which is appended to the app topics
+    #
     sub_topic = "{}/{}".format(args.topic,local_topic)
-    #print("Subscribing to topic '{}'...".format(args.topic))
     print("Subscribing to topic '{}'...".format(sub_topic))
     subscribe_future, packet_id = mqtt_connection.subscribe(
         topic=sub_topic,
@@ -149,11 +159,12 @@ def on_message_received(topic, payload, **kwargs):
     global device_leds
 
     # get the button ID from the topic
+    #   the topic format is root_topic/button_ID
     topic_elems = topic.split("/")
     topic_btn = topic_elems[len(topic_elems)-1] # last element in topic
     # read the message to get the current button state
     payload_data = json.loads(payload)
-    # set the corresponding led to the current state
+    # set the corresponding led to the current state and clear the others
     if payload_data["button_pressed"]:
         set_led(topic_btn)
 
@@ -161,8 +172,10 @@ def on_message_received(topic, payload, **kwargs):
         received_all_event.set()
 
 def btn_down (button):
-    button_state = {"button_pressed" : True}
-    message = json.dumps(button_state)
+    #
+    #   when a button is pressed, send the corresponding message for that button
+    #
+    message = json.dumps({"button_pressed" : True})
     publish_message (button, message)
 
 def publish_message (button, message):
@@ -195,13 +208,19 @@ if __name__ == '__main__':
     grn_btn = Button(6, bounce_time=0.1)
     blu_btn = Button(13, bounce_time=0.1)
 
+    # assign button press handlers
+    red_btn.when_pressed = btn_down
+    grn_btn.when_pressed = btn_down
+    blu_btn.when_pressed = btn_down
+
     # intialize LEDs and set to off (the default)
     device_leds = {
         "Red": create_led(16, str(red_btn.pin), "Red"),
         "Green": create_led(20, str(grn_btn.pin), "Green"),
         "Blue": create_led(21, str(blu_btn.pin), "Blue")
     }
-    # initialize device state
+
+    # initialize the local device state
     device_state = {
         "Red": device_leds["Red"]["state"],
         "Green": device_leds["Green"]["state"],
@@ -262,11 +281,6 @@ if __name__ == '__main__':
             print ("Sending messages until program killed")
         else:
             print ("Sending {} message(s)".format(args.count))
-
-        # assign button press handlers
-        red_btn.when_pressed = btn_down
-        grn_btn.when_pressed = btn_down
-        blu_btn.when_pressed = btn_down
 
         # loop to check publish count progress
         publish_count = 1
