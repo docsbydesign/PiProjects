@@ -30,7 +30,7 @@ publish = requests.request('POST',
 print("Response status: ", str(publish.status_code))
 print("Response headers:")
 # all this is to format the headers output
-headers = pprint.pformat(publish.headers)
-print(json.dumps(json.loads(headers.replace("'",'"')),indent=4))
+headers = pprint.pformat(publish.headers) # format as string
+print(json.dumps(json.loads(headers.replace("'",'"')),indent=4)) # format as JSON structure & print
 if publish.status_code == 200:
         print("Response body:", publish.text)
