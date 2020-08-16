@@ -1,15 +1,28 @@
 # Sample programs
 
 The sample programs in this folder are derived from the [AWS IoT Device SDK samples](https://github.com/aws/aws-iot-device-sdk-python-v2/tree/master/samples).
+The sample command lines for each program require that the `~/certs` folder
+contains these certificates for the device and account being used.
+
+| Filename | description |
+| ----- | ----- |
+| Amazon-root-CA-1.pem  | Certificate authority (CA) certificate  |
+| device.pem.crt | Device (client) certificate file  |
+| private.pem.key | Private key file for the device certificate |
 
 ## pi-setup.txt
 
-Description of what you should do after a clean OS install to prepare the
-system for these samples.
+Description of what you should do your Raspberry Pi after you do a clean OS
+install to prepare it to run these samples.
 
 ## http-pub.py
 
-Example of sending an MQTT message over HTTPS.
+Example of publishing an MQTT message over HTTPS.
+
+### Sample command lines
+```
+python http-pub.py --topic topic_1 --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --endpoint ACCOUNT_PREFIX-ats.iot.AWS_REGION.amazonaws.com --message '{"hello": "world!"}'
+```
 
 ## pubsub.py
 
@@ -24,7 +37,7 @@ message.
 
 ### Sample command line
 ```
-python pubsub-led-1.py --topic topic_1 --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --endpoint ACCOUNT_PREFIX-ats.iot.us-west-2.amazonaws.com
+python pubsub-led-1.py --topic topic_1 --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --endpoint ACCOUNT_PREFIX-ats.iot.AWS_REGION.amazonaws.com
 ```
 
 ## pubsub-led-2.py
