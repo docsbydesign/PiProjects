@@ -78,7 +78,7 @@ device_state = {
         "Blue":     0
 }
 
-SHADOW_VALUE_DEFAULT = json.dumps(device_state).encode('utf-8')
+SHADOW_VALUE_DEFAULT = device_state
 
 class LockedData(object):
     def __init__(self):
@@ -88,10 +88,11 @@ class LockedData(object):
 
 locked_data = LockedData()
 
+#
+#   Create and initialize an LED object and its local metadata
+#       returns local_LED object
+#
 def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
-    #
-    #   Create and initialize an LED object and its local metadata
-    #
     if gpio_led_pin not in GPIO_LED_PINS:
         return None
     if color not in LED_COLORS:
@@ -112,48 +113,22 @@ def create_led (gpio_led_pin, gpio_btn_name, color, initial_state = LED_OFF):
     return new_led
 
 
+#
+#   Set the device LEDs to match the state specified in the JSON payload string
+#       Returns current device state as message payload object
+#
 def set_device_state_to_message(payload):
-    #
-    #   Set the device LEDs to match the state specified in the JSON payload
-    #
-    print("Set device to: {}".format(payload))
+    print("Set device to: {}".format(json.dumps(payload).encode('utf-8')))
     global device_leds
 
-    # read the message to get the current LED state
-    payload_data = json.loads(payload)
     # set the leds to match the current state in the payload_data
     for d_led in device_leds:
         # set the LED value (on/off) to the value specified in the message for that LED
         #  The LEDs are identified by their color in the message
-        device_leds[d_led]["led"].value = payload_data[device_leds[d_led]["color"]]
+        device_leds[d_led]["led"].value = payload[device_leds[d_led]["color"]]
         # set the actual LED's state to that of its value in the local object
         device_leds[d_led]["state"] = device_leds[d_led]["led"].value
 
-    # update the local device state to match the current LED values
-    value = update_device_state()
-    return value
-
-def update_device_state(btn_name = None):
-    #
-    #    If a btn_name is specified, then set the device so that the corresponding
-    #       LED is lit and the others are turned off.
-    #   Then, update the global device_state and return the current device state
-    #       as a JSON string
-    #
-    global device_leds
-    global device_state
-    #
-    #   Light the specified LED and turn off the others
-    #
-    if btn_name:
-        for d_led in device_leds:
-            if str(device_leds[d_led]["btn_name"]) == str(btn_name) :
-                device_leds[d_led]["led"].value = True
-                device_leds[d_led]["state"] = device_leds[d_led]["led"].value
-            else:
-                # turn off all other LEDs
-                device_leds[d_led]["led"].value = False
-                device_leds[d_led]["state"] = device_leds[d_led]["led"].value
     #
     #   Sync the local device state to  that of the LEDs
     #
@@ -161,24 +136,44 @@ def update_device_state(btn_name = None):
     device_state["Green"] = device_leds["Green"]["state"]
     device_state["Blue"] = device_leds["Blue"]["state"]
     #
-    #   return the device state as JSON
-    return json.dumps(device_state).encode('utf-8')
+    #   return the device state as object
+    return device_state
 
 
+# this is the button press handler
+#   when a button is pressed, set the device state so that the
+#       corresponding LED is lit and the others are turned off
+#
+#  set the LED state to match the button pressed
+#   and update the local device state
 def btn_down (button):
-    # this is the button press handler
-    #   the GPIO library send this handler the button object
-    #   of the button that fired it off.
-    #   https://gpiozero.readthedocs.io/en/stable/api_input.html#button
-    #
-    #   when a button is pressed, set the device state so that the
-    #       corresponding LED is lit and the others are turned off
-    #
-    #  set the LED state to match the button pressed
-    #   and update the local device state
-    message = update_device_state(button.pin)
-    # update the shadow to match the local device state
-    change_shadow_value (message, False)
+    new_led_state = SHADOW_VALUE_DEFAULT
+#    new_led_state["Red"] = device_leds["Red"]["state"]
+#    new_led_state["Green"] = device_leds["Green"]["state"]
+#    new_led_state["Blue"] = device_leds["Blue"]["state"]
+
+    for d_led in device_leds:
+        led_color = device_leds[d_led]["color"]
+        if str(device_leds[d_led]["btn_name"]) == str(button.pin) :
+            new_led_state[led_color] = 1
+        else:
+            # turn off all other LEDs
+            new_led_state[led_color] = 0
+
+    # set_device_state_to_message(new_led_state)
+    # report the current device state back to AWS
+    print("Requesting new device state '{}'...".format(json.dumps(new_led_state).encode('utf-8')))
+    request = iotshadow.UpdateShadowRequest(
+        thing_name=thing_name,
+        state=iotshadow.ShadowState(
+            reported=None,
+            desired=new_led_state
+        )
+    )
+    future = shadow_client.publish_update_shadow(request, mqtt.QoS.AT_LEAST_ONCE)
+    future.add_done_callback(on_publish_update_shadow)
+
+    return
 
 
 # Function for gracefully quitting this sample
@@ -217,64 +212,73 @@ def on_get_shadow_accepted(response):
                 return
 
         if response.state:
-            if response.state.delta:
+            if response.state.desired:
                 # the shadow document contains a delta object, which indicates
                 # the desired state of the device is different from the last
                 # reported device state
-                value = json.dumps(response.state.delta).encode('utf-8')
-                if value:
+                desired_value = response.state.desired
+                if desired_value:
                     # set the device to the desired state
-                    print("  Shadow contains delta value '{}'.".format(value))
-                    change_shadow_value(value)
+                    print("  Shadow contains desired value '{}'.".format(json.dumps(desired_value).encode('utf-8')))
+                    device_value = set_device_state_to_message(desired_value)
+                    set_new_shadow_value(device_value)
                     return
 
             if response.state.reported:
                 # the shadow document contains a reported object, which indicates
                 # the last reported device state and that no change to that state
                 # has been requested.
-                value = response.state.reported
-                if value:
-                    print("  Shadow contains reported value '{}'.".format(value))
-                    set_local_value_due_to_initial_query(value)
+                reported_value = response.state.reported
+                if reported_value:
+                    print("  Shadow contains reported value '{}'.".format(json.dumps(reported_value).encode('utf-8')))
+                    device_value = set_device_state_to_message(reported_value)
+                    set_new_shadow_value(device_value)
                     return
         #
         # if the shadow contains no device state information, reset the device
         #  to the defaults.
         print("  Shadow document '{}' is not recognized. Setting defaults...".format(json.dumps(response).encode('utf-8')))
-        change_shadow_value(SHADOW_VALUE_DEFAULT)
+        device_value = set_device_state_to_message(SHADOW_VALUE_DEFAULT)
+        set_new_shadow_value(device_value)
         return
 
     except Exception as e:
         exit(e)
+
 
 def on_get_shadow_rejected(error):
     # type: (iotshadow.ErrorResponse) -> None
     if error.code == 404:
         #  no shadow document exists so create a default one
         print("Thing has no shadow document. Creating with defaults...")
-        change_shadow_value(SHADOW_VALUE_DEFAULT)
+        device_value = set_device_state_to_message(SHADOW_VALUE_DEFAULT)
+        set_new_shadow_value(device_value)
     else:
         exit("Get request was rejected. code:{} message:'{}'".format(
             error.code, error.message))
+
 
 def on_shadow_delta_updated(delta):
     # type: (iotshadow.ShadowDeltaUpdatedEvent) -> None
     try:
         print("Received shadow delta event.")
-        if delta.state and delta.state.desired:
-            value = delta.state.desired
-            if value is None:
-                print("  Delta reports '{}'. Resetting defaults...".format(json.dumps(delta.state).encode('utf-8')))
-                change_shadow_value(SHADOW_VALUE_DEFAULT)
-                return
-            else:
-                print("  Delta reports that desired value is '{}'. Changing local value...".format(value))
-                change_shadow_value(value)
+        if delta.state:
+            delta_value = SHADOW_VALUE_DEFAULT
+            for led_color in delta.state:
+                delta_value[led_color] = delta.state[led_color]
+
+            print("  Delta reports that desired value is '{}'. Changing local value...".format(json.dumps(delta_value).encode('utf-8')))
+            device_value = set_device_state_to_message(delta_value)
+            set_new_shadow_value(device_value)
         else:
-            print("  Delta did not report a change in '{}'".format(json.dumps(delta.state).encode('utf-8')))
+            print("  Delta reports '{}'. Resetting defaults...".format(json.dumps(delta.state).encode('utf-8')))
+            device_value = set_device_state_to_message(SHADOW_VALUE_DEFAULT)
+            set_new_shadow_value(device_value)
+            return
 
     except Exception as e:
         exit(e)
+
 
 def on_publish_update_shadow(future):
     #type: (Future) -> None
@@ -285,54 +289,57 @@ def on_publish_update_shadow(future):
         print("Failed to publish update request.")
         exit(e)
 
+
 def on_update_shadow_accepted(response):
     # type: (iotshadow.UpdateShadowResponse) -> None
     try:
         print("Finished updating reported shadow value to '{}'.".format(json.dumps(response.state.reported).encode('utf-8'))) # type: ignore
-        print("Enter desired value: ") # remind user they can input new values
     except:
         exit("Updated shadow is missing the target property.")
+
 
 def on_update_shadow_rejected(error):
     # type: (iotshadow.ErrorResponse) -> None
     exit("Update request was rejected. code:{} message:'{}'".format(
         error.code, error.message))
 
-def set_local_value_due_to_initial_query(reported_value):
-    with locked_data.lock:
-        locked_data.shadow_value = reported_value
-    print("Enter desired value: ") # remind user they can input new values
 
-def change_shadow_value(value, set_device_state = True):
+def device_values_are_equal(value1, value2):
+    print("testing {} == {}".format(json.dumps(value1).encode('utf-8'),json.dumps(value2).encode('utf-8')))
+    try:
+        if ((value1["Red"] == value2["Red"]) and
+            (value1["Green"] == value2["Green"]) and
+            (value1["Blue"] == value2["Blue"])):
+            return True
+        else:
+            return False
+    except:
+        return False
+
+#
+#   Change local shadow and optionally the device to match value parameter
+#
+#
+def set_new_shadow_value(value):
     global device_state
     with locked_data.lock:
-        if locked_data.shadow_value == value:
-            print("Local value is already '{}'.".format(value))
-            print("Enter desired value: ") # remind user they can input new values
-            return
-        #
-        #   Set device state to shadow state
-        if set_device_state:
-            print("Setting device to: {}".format(value))
-            device_value = set_device_state_to_message(value)
-        else:
-            device_value = value
         #
         #   update shadow value to match device
-        print("Changed local shadow value to '{}'.".format(device_value))
-        locked_data.shadow_value = device_value
+        print("Changed local shadow value to '{}'.".format(json.dumps(value).encode('utf-8')))
+        locked_data.shadow_value = value
     #
     # report the current device state back to AWS
-    print("Updating reported shadow value to '{}'...".format(value))
+    print("Updating reported shadow value to '{}'...".format(json.dumps(value).encode('utf-8')))
     request = iotshadow.UpdateShadowRequest(
         thing_name=thing_name,
         state=iotshadow.ShadowState(
             reported=value,
-            desired=value,
+            desired=value
         )
     )
     future = shadow_client.publish_update_shadow(request, mqtt.QoS.AT_LEAST_ONCE)
     future.add_done_callback(on_publish_update_shadow)
+
 
 def user_input_thread_fn():
     while True:
@@ -348,13 +355,14 @@ def user_input_thread_fn():
             if new_value in ['exit', 'quit']:
                 exit("User has quit")
                 break
-            else:
-                change_shadow_value(new_value)
+#            else:
+#                change_shadow_value(new_value)
 
         except Exception as e:
             print("Exception on input thread.")
             exit(e)
             break
+
 
 if __name__ == '__main__':
     # Process input args
