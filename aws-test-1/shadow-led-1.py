@@ -284,7 +284,7 @@ def on_publish_update_shadow(future):
     #type: (Future) -> None
     try:
         future.result()
-        print("Update request published.")
+        print("Shadow update published.")
     except Exception as e:
         print("Failed to publish update request.")
         exit(e)
@@ -475,20 +475,22 @@ if __name__ == '__main__':
         # Wait for subscription to succeed
         delta_subscribed_future.result()
 
-        print("Subscribing to Update responses...")
-        update_accepted_subscribed_future, _ = shadow_client.subscribe_to_update_shadow_accepted(
-            request=iotshadow.UpdateShadowSubscriptionRequest(thing_name=args.thing_name),
-            qos=mqtt.QoS.AT_LEAST_ONCE,
-            callback=on_update_shadow_accepted)
+        if update_reported_value_on_server():
+            # only the buttons device updates the shadow on the server
+            print("Subscribing to Update responses...")
+            update_accepted_subscribed_future, _ = shadow_client.subscribe_to_update_shadow_accepted(
+                request=iotshadow.UpdateShadowSubscriptionRequest(thing_name=args.thing_name),
+                qos=mqtt.QoS.AT_LEAST_ONCE,
+                callback=on_update_shadow_accepted)
 
-        update_rejected_subscribed_future, _ = shadow_client.subscribe_to_update_shadow_rejected(
-            request=iotshadow.UpdateShadowSubscriptionRequest(thing_name=args.thing_name),
-            qos=mqtt.QoS.AT_LEAST_ONCE,
-            callback=on_update_shadow_rejected)
+            update_rejected_subscribed_future, _ = shadow_client.subscribe_to_update_shadow_rejected(
+                request=iotshadow.UpdateShadowSubscriptionRequest(thing_name=args.thing_name),
+                qos=mqtt.QoS.AT_LEAST_ONCE,
+                callback=on_update_shadow_rejected)
 
-        # Wait for subscriptions to succeed
-        update_accepted_subscribed_future.result()
-        update_rejected_subscribed_future.result()
+            # Wait for subscriptions to succeed
+            update_accepted_subscribed_future.result()
+            update_rejected_subscribed_future.result()
 
         print("Subscribing to Get responses...")
         get_accepted_subscribed_future, _ = shadow_client.subscribe_to_get_shadow_accepted(
