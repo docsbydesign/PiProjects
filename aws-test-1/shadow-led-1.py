@@ -292,10 +292,16 @@ def on_publish_update_shadow(future):
 
 def on_update_shadow_accepted(response):
     # type: (iotshadow.UpdateShadowResponse) -> None
+    # print("Shadow update accepted: '{}'.".format(json.dumps(reported_value).encode('utf-8')))
     try:
-        print("Finished updating reported shadow value to '{}'.".format(json.dumps(response.state.reported).encode('utf-8'))) # type: ignore
+        reported_value = response.state.reported
+        if reported_value:
+            print("Shadow update reported accepted: '{}'.".format(json.dumps(reported_value).encode('utf-8')))
+        desired_value = response.state.desired
+        if desired_value:
+           print("Shadow update desired accepted: '{}'.".format(json.dumps(desired_value).encode('utf-8')))
     except:
-        exit("Updated shadow is missing the target property.")
+        print("Updated shadow response is missing the expected properties.")
 
 
 def on_update_shadow_rejected(error):
@@ -324,21 +330,35 @@ def set_new_shadow_value(value):
     global device_state
     with locked_data.lock:
         #
-        #   update shadow value to match device
+        #   update local shadow value to match device
         print("Changed local shadow value to '{}'.".format(json.dumps(value).encode('utf-8')))
         locked_data.shadow_value = value
-    #
-    # report the current device state back to AWS
-    print("Updating reported shadow value to '{}'...".format(json.dumps(value).encode('utf-8')))
-    request = iotshadow.UpdateShadowRequest(
-        thing_name=thing_name,
-        state=iotshadow.ShadowState(
-            reported=value,
-            desired=value
+
+    if update_reported_value_on_server():
+        #
+        # report the current device state back to AWS if this is the device
+        #   with the buttons
+        print("Updating reported shadow value to '{}'...".format(json.dumps(value).encode('utf-8')))
+        request = iotshadow.UpdateShadowRequest(
+            thing_name=thing_name,
+            state=iotshadow.ShadowState(
+                reported=value,
+                desired=None
+            )
         )
-    )
-    future = shadow_client.publish_update_shadow(request, mqtt.QoS.AT_LEAST_ONCE)
-    future.add_done_callback(on_publish_update_shadow)
+        future = shadow_client.publish_update_shadow(request, mqtt.QoS.AT_LEAST_ONCE)
+        future.add_done_callback(on_publish_update_shadow)
+
+
+# return true if client is "buttons"
+#  only the client with the buttons can update "reported" value
+#   on the shadoow on the server
+def update_reported_value_on_server():
+    global args
+    if args.client_id == 'buttons':
+        return True
+    else:
+        return False
 
 
 def user_input_thread_fn():
