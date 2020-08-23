@@ -1,0 +1,31 @@
+{
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/UpdateShadowOnButtonPressExceptBlue",
+    "rule": {
+        "ruleName": "UpdateShadowOnButtonPressExceptBlue",
+        "sql": "SELECT * AS state.desired FROM 'demo_device/buttons/button_state' WHERE Blue = 0 ",
+        "createdAt": 1598156390.0,
+        "actions": [
+            {
+                "republish": {
+                    "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+                    "topic": "$$aws/things/MyIotThing/shadow/update",
+                    "qos": 1
+                }
+            },
+            {
+                "cloudwatchLogs": {
+                    "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+                    "logGroupName": "AWSIotLogs"
+                }
+            }
+        ],
+        "ruleDisabled": false,
+        "awsIotSqlVersion": "2016-03-23",
+        "errorAction": {
+            "cloudwatchLogs": {
+                "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+                "logGroupName": "AWSIotLogs"
+            }
+        }
+    }
+}

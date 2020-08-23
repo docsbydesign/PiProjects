@@ -1,0 +1,32 @@
+{
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/RepublishButtonMessage",
+    "rule": {
+        "ruleName": "RepublishButtonMessage",
+        "sql": "SELECT  * AS state.desired from 'demo_device/buttons/button_state'",
+        "description": "takes button message and republishes it",
+        "createdAt": 1598153653.0,
+        "actions": [
+            {
+                "republish": {
+                    "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+                    "topic": "demo_service/buttons/button_state",
+                    "qos": 1
+                }
+            },
+            {
+                "cloudwatchLogs": {
+                    "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+                    "logGroupName": "AWSIotLogs"
+                }
+            }
+        ],
+        "ruleDisabled": false,
+        "awsIotSqlVersion": "2016-03-23",
+        "errorAction": {
+            "cloudwatchLogs": {
+                "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+                "logGroupName": "AWSIotLogs"
+            }
+        }
+    }
+}
