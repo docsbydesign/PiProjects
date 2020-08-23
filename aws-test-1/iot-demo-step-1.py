@@ -10,14 +10,12 @@ from awsiot import mqtt_connection_builder
 import traceback
 import sys
 import threading
-import time
 from uuid import uuid4
 from gpiozero import LED, Button
-from signal import pause
 import json
 
 # This sample uses the Message Broker for AWS IoT to send and receive messages
-# through an MQTT connection to emulate STep 1 of the learning demo at
+# through an MQTT connection to emulate Step 1 of the learning demo at
 # https://console.aws.amazon.com/iot/home#/tutorial-intro.
 #
 # On startup, the device connects to the server, subscribes to the
@@ -25,6 +23,8 @@ import json
 # When a button is pressed, the device publishes a demo_device/client_id/led_state
 # message to indicate the desired LED state. When the message is received,
 # the device sets its LEDs to match the state described in the message.
+
+DEFAULT_BUTTON_DEVICE_LED_TOPIC_DESIRED = "demo_device/buttons/led_state/desired"
 
 parser = argparse.ArgumentParser(description="Use MQTT messages to emulate Step 1 of the AWS IoT learning demo.")
 parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. " +
@@ -35,12 +35,7 @@ parser.add_argument('--root-ca', help="File path to root certificate authority, 
                                       "Necessary if MQTT server uses a certificate that's not already in " +
                                       "your trust store.")
 parser.add_argument('--client-id', default="test-" + str(uuid4()), help="Client ID of this device for MQTT connection.")
-parser.add_argument('--button-client', default="buttons", help="The Client ID of the button device.")
-# parser.add_argument('--topic', default="test/topic", help="Topic to subscribe to, and publish messages to.")
-# parser.add_argument('--message', default="Hello World!", help="Message to publish. " +
-#                                                              "Specify empty string to publish nothing.")
-# parser.add_argument('--count', default=0, type=int, help="Number of messages to publish/receive before exiting. " +
-#                                                          "Default is 0 to run forever.")
+parser.add_argument('--led-state-topic', default=DEFAULT_BUTTON_DEVICE_LED_TOPIC_DESIRED, help="The topic that contians the desired LED state messages.")
 parser.add_argument('--use-websocket', default=False, action='store_true',
     help="To use a websocket instead of raw mqtt. If you " +
     "specify this option you must specify a region for signing, you can also enable proxy mode.")
@@ -86,11 +81,10 @@ io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
 # set device message topics
 THIS_DEVICE = "demo_device/" + args.client_id
-BUTTON_DEVICE = "demo_device/" + args.button_client
 THIS_DEVICE_LED_TOPIC = THIS_DEVICE + "/led_state"
 THIS_DEVICE_LED_TOPIC_DESIRED = THIS_DEVICE_LED_TOPIC + "/desired"
 THIS_DEVICE_LED_TOPIC_REPORTED = THIS_DEVICE_LED_TOPIC + "/reported"
-BUTTON_DEVICE_LED_TOPIC_DESIRED = BUTTON_DEVICE + "/led_state" + "/desired"
+BUTTON_DEVICE_LED_TOPIC_DESIRED = args.led_state_topic
 
 #
 #   Create and initialze an LED dictionary
