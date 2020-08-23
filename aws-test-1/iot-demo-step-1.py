@@ -34,7 +34,8 @@ parser.add_argument('--key', help="File path to your private key, in PEM format.
 parser.add_argument('--root-ca', help="File path to root certificate authority, in PEM format. " +
                                       "Necessary if MQTT server uses a certificate that's not already in " +
                                       "your trust store.")
-parser.add_argument('--client-id', default="test-" + str(uuid4()), help="Client ID for MQTT connection.")
+parser.add_argument('--client-id', default="test-" + str(uuid4()), help="Client ID of this device for MQTT connection.")
+parser.add_argument('--button-client', default="buttons", help="The Client ID of the button device.")
 # parser.add_argument('--topic', default="test/topic", help="Topic to subscribe to, and publish messages to.")
 # parser.add_argument('--message', default="Hello World!", help="Message to publish. " +
 #                                                              "Specify empty string to publish nothing.")
@@ -84,9 +85,12 @@ args = parser.parse_args()
 io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
 # set device message topics
-DEVICE_LED_TOPIC = "demo_device/" + args.client_id + "/led_state"
-DEVICE_LED_TOPIC_DESIRED = DEVICE_LED_TOPIC + "/desired"
-DEVICE_LED_TOPIC_REPORTED = DEVICE_LED_TOPIC + "/reported"
+THIS_DEVICE = "demo_device/" + args.client_id
+BUTTON_DEVICE = "demo_device/" + args.button_client
+THIS_DEVICE_LED_TOPIC = THIS_DEVICE + "/led_state"
+THIS_DEVICE_LED_TOPIC_DESIRED = THIS_DEVICE_LED_TOPIC + "/desired"
+THIS_DEVICE_LED_TOPIC_REPORTED = THIS_DEVICE_LED_TOPIC + "/reported"
+BUTTON_DEVICE_LED_TOPIC_DESIRED = BUTTON_DEVICE + "/led_state" + "/desired"
 
 #
 #   Create and initialze an LED dictionary
@@ -185,13 +189,15 @@ def on_message_received(topic, payload, **kwargs):
 
     # read the message to get the current LED state
     payload_data = json.loads(payload)
-    # set the leds to match the current state in the payload_data
 
-    if topic == DEVICE_LED_TOPIC_DESIRED:
+    # if this is a messaage from the button device that indicates a change in
+    # the device state, set the leds to match the current state in the payload_data
+    if topic == BUTTON_DEVICE_LED_TOPIC_DESIRED:
         new_device_state = set_device_state(payload_data)
         print("  + LED state set to {}".format(json.dumps(new_device_state).encode('utf-8')))
 
-    publish_message(DEVICE_LED_TOPIC_REPORTED, new_device_state)
+    # report the current state of this device
+    publish_message(THIS_DEVICE_LED_TOPIC_REPORTED, new_device_state)
 
 
 def btn_down (button):
@@ -215,7 +221,7 @@ def btn_down (button):
             desired_device_state[led_color] = LED_LIT
 
     print("  + Desired state: {}".format(json.dumps(desired_device_state).encode('utf-8')))
-    publish_message (DEVICE_LED_TOPIC_DESIRED, desired_device_state)
+    publish_message (THIS_DEVICE_LED_TOPIC_DESIRED, desired_device_state)
 
     return
 
@@ -350,7 +356,8 @@ if __name__ == '__main__':
     print("  + Connected!")
 
     # Subscribe to device messages
-    subscribe_to_topic(DEVICE_LED_TOPIC_DESIRED)
+    #  listen for desired states from the button device
+    subscribe_to_topic(BUTTON_DEVICE_LED_TOPIC_DESIRED)
 
     # A "daemon" thread won't prevent the program from shutting down.
     print("Waiting for messages. Enter 'exit' to end program.")
