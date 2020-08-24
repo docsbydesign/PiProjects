@@ -79,6 +79,29 @@ python pubsub-led-4.py --topic topic_1 --root-ca ~/certs/Amazon-root-CA-1.pem --
 A clone of the shadow.py in the [AWS IoT Device SDK samples](https://github.com/aws/aws-iot-device-sdk-python-v2/tree/master/samples).
 The `shadow-led-*.py` programs are derived from this file.
 
+#### Sample command line
+```
+python shadow-led-1.py --thing-name MyIotThing --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --endpoint ACCOUNT_PREFIX-ats.iot.AWS_REGION.amazonaws.com
+```
+
+## shadow-led-1.py
+
+Runs in two modes: *button device* and *led device*. Button device requests the
+led to light based on the last button pressed and the led device listens for
+changes to the device state to light the LED that corresponds to the last button
+pressed. The device state is recorded in a Device Shadow so a newly connected LED
+device can display the current state of the device shadow.
+
+#### Sample command line: button device
+```
+python shadow-led-1.py --thing-name MyIotThing --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint ACCOUNT_PREFIX-ats.iot.AWS_REGION.amazonaws.com
+```
+
+#### Sample command line: LED device
+```
+python shadow-led-1.py --thing-name MyIotThing --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id led-x --endpoint ACCOUNT_PREFIX-ats.iot.AWS_REGION.amazonaws.com
+```
+
 #### On device init or reconnect
 
 1. publish_get_shadow(thing_name)  # request current shadow
@@ -101,3 +124,57 @@ The `shadow-led-*.py` programs are derived from this file.
 
 1. on_shadow_delta_updated(delta)
    a. change_shadow_value(delta) # set the LED values to the delta msg value
+
+
+## AWS IoT Learn Demo (Step 1)
+
+Button device sends a message when a button is pressed and lights the device LEDs based on the message received. After updating the LEDs, the device sends a message reporting the current LED status.
+
+LED device subscribes to button-pressed messages and lights the device LEDs based on the message received. After updating the LEDs, the device sends a message reporting the current LED status.
+
+
+#### Command Line (button device)
+'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+#### Command Line (LED device)
+'''
+python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+### AWS IoT Learn Demo (Step 1 - with Rule)
+
+Button device sends a message when a button is pressed and lights the device LEDs based on the message received. After updating the LEDs, the device sends a message reporting the current LED status.
+
+Add rule in iot-demo-step-1.json and enable it.
+
+LED device subscribes to republished messages and lights the device LEDs based on the message received. After updating the LEDs, the device sends a message reporting the current LED status.
+
+
+#### Command Line (button device)
+'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+#### Command Line (LED device)
+'''
+python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --led-state-topic 'demo_service/buttons/led_state/desired' --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+## AWS IoT Learn Demo (Step 2)
+
+Same as Step 1 with a rule, but the rule is different. There are two rules waiting for a message to republish. *RepublishRed* republishes a device-state message with a `Red` LED selected without changing it.  *ChangeBlueToGreen* republishes messages with `Green` and `Blue` LED requests as `Green` only.
+
+On the button device, the LEDs will match the button pressed. On the LED device, however, both the `Green` and `Blue` buttons will light only the `Green` LED.
+
+#### Add and enable the rules
+
+Add the rules in iot-demo-step-2.json and enable them. Disable all other rules that use the demo message topics.
+
+#### Command Line (button device)
+'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+#### Command Line (LED device)
+'''
+python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --led-state-topic 'demo_service/buttons/led_state/desired' --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
