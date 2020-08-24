@@ -1,0 +1,64 @@
+[
+  {
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/RepublishRed",
+    "rule": {
+      "ruleName": "RepublishRed",
+      "sql": "SELECT \n  1 AS Red,\n  0 AS Green,\n  0 AS Blue\nFROM 'demo_device/buttons/led_state/desired'\nWHERE Red = 1",
+      "description": "Used with ChangeBlueToGreen to pass the Red requests through unchanged.",
+      "createdAt": 1598223808,
+      "actions": [
+        {
+          "republish": {
+            "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+            "topic": "demo_service/buttons/led_state/desired"
+          }
+        },
+        {
+          "cloudwatchLogs": {
+            "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+            "logGroupName": "AWSIotLogs"
+          }
+        }
+      ],
+      "ruleDisabled": false,
+      "awsIotSqlVersion": "2016-03-23",
+      "errorAction": {
+        "cloudwatchLogs": {
+          "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+          "logGroupName": "AWSIotLogs"
+        }
+      }
+    }
+  },
+  {
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/ChangeBlueToGreen",
+    "rule": {
+      "ruleName": "ChangeBlueToGreen",
+      "sql": "SELECT \n  Red AS Red,\n  1 AS Green,\n  0 AS Blue\nFROM 'demo_device/buttons/led_state/desired'\nWHERE Blue = 1 OR Green = 1\n  ",
+      "createdAt": 1598223506,
+      "actions": [
+        {
+          "republish": {
+            "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+            "topic": "demo_service/buttons/led_state/desired",
+            "qos": 1
+          }
+        },
+        {
+          "cloudwatchLogs": {
+            "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+            "logGroupName": "AWSIotLogs"
+          }
+        }
+      ],
+      "ruleDisabled": false,
+      "awsIotSqlVersion": "2016-03-23",
+      "errorAction": {
+        "cloudwatchLogs": {
+          "roleArn": "arn:aws:iam::018451984717:role/service-role/IoT_Logging",
+          "logGroupName": "AWSIotLogs"
+        }
+      }
+    }
+  }
+]
