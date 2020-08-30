@@ -1,0 +1,60 @@
+[
+  {
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/on_button_press",
+    "rule": {
+      "ruleName": "on_button_press",
+      "sql": "SELECT * FROM 'demo_device/buttons/led_state/desired'",
+      "createdAt": 1598828822,
+      "actions": [
+        {
+          "republish": {
+            "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+            "topic": "demo_device/buttons/led_state/pending",
+            "qos": 1
+          }
+        }
+      ],
+      "ruleDisabled": false,
+      "awsIotSqlVersion": "2016-03-23"
+    }
+  },
+  {
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/on_button_press_shadow",
+    "rule": {
+      "ruleName": "on_button_press_shadow",
+      "sql": "SELECT * as state.desired FROM 'demo_device/buttons/led_state/desired' ",
+      "createdAt": 1598828816,
+      "actions": [
+        {
+          "republish": {
+            "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+            "topic": "$$aws/things/leds_demo_device/shadow/update",
+            "qos": 1
+          }
+        }
+      ],
+      "ruleDisabled": false,
+      "awsIotSqlVersion": "2016-03-23"
+    }
+  },
+  {
+    "ruleArn": "arn:aws:iot:us-west-2:018451984717:rule/on_shadow_updated",
+    "rule": {
+      "ruleName": "on_shadow_updated",
+      "sql": "SELECT state.reported\nFROM '$aws/things/leds_demo_device/shadow/update/accepted'\nWHERE NOT isNull(state.reported)\n",
+      "description": "",
+      "createdAt": 1598830927,
+      "actions": [
+        {
+          "republish": {
+            "roleArn": "arn:aws:iam::018451984717:role/IOT_Rule_Actions",
+            "topic": "demo_device/buttons/led_state/reported",
+            "qos": 1
+          }
+        }
+      ],
+      "ruleDisabled": false,
+      "awsIotSqlVersion": "2016-03-23"
+    }
+  }
+]
