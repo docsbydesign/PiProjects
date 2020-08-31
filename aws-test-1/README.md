@@ -173,7 +173,8 @@ On the button device, the LEDs will match the button pressed. On the LED device,
 Add the rules in iot-demo-step-2.json and enable them. Disable all other rules that use the demo message topics.
 
 #### Command Line (button device)
-```python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8EXAMPLEmbb-ats.iot.us-west-2.amazonaws.com
+```
+python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8EXAMPLEmbb-ats.iot.us-west-2.amazonaws.com
 ```
 
 #### Command Line (LED device)
@@ -191,8 +192,6 @@ Same as step 2, but with an additional topic rules
 
 Adds a device shadow to the previous steps. Adding a device shadow requires
 the message logic to be redesigned to incorporate the shadow.
-
-**iot-demo-step-4.py**
 
 This program runs on both a button device and an led device.
 
