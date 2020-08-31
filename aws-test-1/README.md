@@ -215,9 +215,9 @@ This program runs on both a button device and an led device.
 * `on_button_press`
   * **Republish** `demo_device/buttons/led_state/pending` (led state object)
 * `on_button_press_shadow`
-  * **republish** `$aws/things/leds_demo_device/shadow/update` (desired state)
+  * **Republish** `$aws/things/leds_demo_device/shadow/update` (desired state)
 * `on_shadow_updated` (with reported state)
-  * **republish** `demo_device/buttons/led_state/reported` (led state object)
+  * **Republish** `demo_device/buttons/led_state/reported` (led state object)
 
 #### Command Line (button device)
 ```
