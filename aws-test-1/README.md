@@ -178,3 +178,53 @@ Add the rules in iot-demo-step-2.json and enable them. Disable all other rules t
 '''
 python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --led-state-topic 'demo_service/buttons/led_state/desired' --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
 '''
+
+## AWS IoT Learn Demo (Step 3)
+
+_**Coming soon**_
+
+Same as step 2, but with an additional topic rules
+
+## AWS IoT Learn Demo (Step 4)
+
+Adds a device shadow to the previous steps. Adding a device shadow requires
+the message logic to be redesigned to incorporate the shadow.
+
+**iot-demo-step-4.py**
+
+This program runs on both a button device and an led device.
+
+#### On the button device
+* Subscribe to:
+  * `demo_device/buttons/led_state/pending` (led state object) to set the LEDs blinking to indicate successful receipt of button state
+  * `demo_device/buttons/led_state/reported` (led state object) to set the LEDs to steady to indicate the LEDs on the LED device have been set to desired state.
+  * `$aws/things/leds_demo_device/shadow/get/accepted` (get shadow) to initialize the device to match current shadow state, and then publish the reported state
+  * `$aws/things/leds_demo_device/shadow/get/rejected` (get shadow) to display the error getting current shadow state.
+* On btn_down:
+  * Publish the button state in topic `demo_device/buttons/led_state/desired`. The message payload has the desired state of the LEDs.
+
+#### On the led device
+* subscribe to:
+  * `$aws/things/leds_demo_device/shadow/get/accepted` (get shadow) to update the device to match current shadow state and then publish the reported state
+  * `$aws/things/leds_demo_device/shadow/get/rejected` (get shadow) to display the error getting current shadow state
+  * `$aws/things/leds_demo_device/shadow/update/delta` (shadow-delta) to update device to match desired shadow state and then publish the reported state
+  * `$aws/things/leds_demo_device/shadow/update/accepted` (update shadow) confirms that the  update was successful
+  * `$aws/things/leds_demo_device/shadow/update/rejected` (update shadow) confirms the update was not successful
+
+#### The program also expects these IoT Topic Rules:
+* `on_button_press`
+  * **Republish** `demo_device/buttons/led_state/pending` (led state object)
+* `on_button_press_shadow`
+  * **republish** `$aws/things/leds_demo_device/shadow/update` (desired state)
+* `on_shadow_updated` (with reported state)
+  * **republish** `demo_device/buttons/led_state/reported` (led state object)
+
+#### Command Line (button device)
+'''
+python iot-demo-step-4.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --thing-name buttons_demo_device --led-thing-name leds_demo_device --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''
+
+#### Command Line (LED device)
+'''
+python iot-demo-step-4.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --thing-name leds_demo_device --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+'''

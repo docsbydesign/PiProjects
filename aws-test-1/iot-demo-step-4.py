@@ -84,8 +84,6 @@ The program also expects these IoT Topic Rules:
 #  The button device confirms that the device state has been updated to match
 #  the shadow device.
 
-DEFAULT_BUTTON_DEVICE_LED_TOPIC_DESIRED = "demo_device/buttons/led_state/desired"
-
 parser = argparse.ArgumentParser(description="Use MQTT messages to emulate Step 4 of the AWS IoT learning demo.")
 parser.add_argument('--endpoint', required=True, help="Your AWS IoT custom endpoint, not including a port. " +
                                         "Ex: \"abcd123456wxyz-ats.iot.us-east-1.amazonaws.com\"")
@@ -97,10 +95,10 @@ parser.add_argument('--root-ca', help="File path to root certificate authority, 
 parser.add_argument('--thing-name', required=True, help="The name assigned to your IoT Thing. " +
                                         "Button device thing names must start with 'buttons' and " +
                                         "LED device thing names must start with 'led'." )
+parser.add_argument('--led-thing-name', default=None, help="The thing name of the LED device. " +
+                                         "If omitted, the device's thing name is used.")
 parser.add_argument('--client-id', default="button", help="Client ID of this device for MQTT connection." +
                                         "Must be unique in the account and Region." )
-parser.add_argument('--led-state-topic', default=DEFAULT_BUTTON_DEVICE_LED_TOPIC_DESIRED,
-                                        help="The topic that contians the desired LED state messages.")
 parser.add_argument('--use-websocket', default=False, action='store_true',
                                         help="To use a websocket instead of raw mqtt. If you " +
                                         "specify this option you must specify a region for signing, " +
@@ -149,15 +147,20 @@ DEFAULT_DEVICE_STATE = {
 # Using globals for command line parameters
 args = parser.parse_args()
 
+# initialize the led_thing_name value
+if not args.led_thing_name:
+    args.led_thing_name = args.thing_name
+
 io.init_logging(getattr(io.LogLevel, args.verbosity), 'stderr')
 
 # set device message topics
 THIS_DEVICE = "demo_device/" + args.client_id
 THIS_DEVICE_LED_TOPIC = THIS_DEVICE + "/led_state"
+THIS_DEVICE_BUTTON_TOPIC = THIS_DEVICE + "/button_state"
 THIS_DEVICE_LED_TOPIC_DESIRED = THIS_DEVICE_LED_TOPIC + "/desired"
-THIS_DEVICE_LED_TOPIC_REPORTED = THIS_DEVICE_LED_TOPIC + "/reported"
 THIS_DEVICE_LED_TOPIC_PENDING = THIS_DEVICE_LED_TOPIC + "/pending"
-BUTTON_DEVICE_LED_TOPIC_DESIRED = args.led_state_topic
+THIS_DEVICE_LED_TOPIC_REPORTED = THIS_DEVICE_LED_TOPIC + "/reported"
+THIS_DEVICE_BUTTON_TOPIC_REPORTED = THIS_DEVICE_BUTTON_TOPIC + "/reported"
 
 ########################################
 ##  Hardware functions
@@ -209,7 +212,7 @@ def set_device_state(device_led_state, pending_state=False):
             led_value = LED_OFF
         if led_value and pending_state:
             # flash Pending LEDs
-            device_leds[d_led]["led"].blink(0.2,0.2)
+            device_leds[d_led]["led"].blink(0.05,0.05)
             new_device_state[led_color] = LED_LIT # show blinking as ON
         else:
             # display steady LEDs when ON
@@ -229,6 +232,18 @@ def get_device_state():
         led_color = device_leds[d_led]["color"]
         current_device_state[led_color] = device_leds[d_led]["led"].value
     return current_device_state
+
+
+def device_values_are_equal(value1, value2):
+    try:
+        if ((value1["Red"] == value2["Red"]) and
+            (value1["Green"] == value2["Green"]) and
+            (value1["Blue"] == value2["Blue"])):
+            return True
+        else:
+            return False
+    except:
+        return False
 
 
 def btn_down (button):
@@ -251,9 +266,12 @@ def btn_down (button):
         if (str(button.pin) == device_leds[d_led]["btn_name"]):
             desired_device_state[led_color] = LED_LIT
 
-    print("  + Desired state: {}".format(json.dumps(desired_device_state).encode('utf-8')))
-    publish_message (THIS_DEVICE_LED_TOPIC_DESIRED, desired_device_state)
-
+    if not device_values_are_equal(desired_device_state, get_device_state()):
+        # if the LED for the button pressed is not already lit, publish the message
+        print("  + Desired state: {}".format(json.dumps(desired_device_state).encode('utf-8')))
+        publish_message (THIS_DEVICE_LED_TOPIC_DESIRED, desired_device_state)
+    else:
+        print("  + The LED for the button pressed is aleady lit. No message sent.")
     return
 
 
@@ -347,16 +365,22 @@ def on_reported_message_received(topic, payload, **kwargs):
     global device_leds
     global device_type
 
-    # read the message to get the current LED state
-    payload_data = json.loads(payload)
+    try:
+        # read the message to get the current LED state
+        payload_data = json.loads(payload)
 
-    # if this is a messaage from the button device that indicates a change in
-    # the device state, set the leds to match the current state in the payload_data
-    if payload_data["reported"]:
-        new_device_state = set_device_state(payload_data["reported"])
-        print("  + LED state set to {}".format(json.dumps(new_device_state).encode('utf-8')))
-        # after updating the device, report its current state
-        publish_message(THIS_DEVICE_LED_TOPIC_REPORTED, new_device_state)
+        # if this is a messaage from the button device that indicates a change in
+        # the device state, set the leds to match the current state in the payload_data
+        if "reported" in payload_data:
+            new_device_state = set_device_state(payload_data["reported"])
+            print("  + LED state set to {}".format(json.dumps(new_device_state).encode('utf-8')))
+            # after updating the device, report its current state
+            publish_message(THIS_DEVICE_BUTTON_TOPIC_REPORTED, new_device_state)
+        else:
+            print("  ** Payload not recognized: {}".format(payload))
+
+    except Exception as e:
+        print("  ** Exception reading payload: {}".format(payload))
 
     return
 
@@ -689,12 +713,12 @@ if __name__ == '__main__':
         #
         print("Subscribing to Get responses...")
         get_accepted_subscribed_future, _ = shadow_client.subscribe_to_get_shadow_accepted(
-            request=iotshadow.GetShadowSubscriptionRequest(thing_name=args.thing_name),
+            request=iotshadow.GetShadowSubscriptionRequest(thing_name=args.led_thing_name),
             qos=mqtt.QoS.AT_LEAST_ONCE,
             callback=on_get_shadow_accepted)
 
         get_rejected_subscribed_future, _ = shadow_client.subscribe_to_get_shadow_rejected(
-            request=iotshadow.GetShadowSubscriptionRequest(thing_name=args.thing_name),
+            request=iotshadow.GetShadowSubscriptionRequest(thing_name=args.led_thing_name),
             qos=mqtt.QoS.AT_LEAST_ONCE,
             callback=on_get_shadow_rejected)
 
@@ -706,9 +730,9 @@ if __name__ == '__main__':
 
         # Issue request for shadow's current state.
         # The response will be received by the on_get_accepted() callback
-        print("Requesting current shadow state...")
+        print("Requesting current shadow state from {}...".format(args.led_thing_name))
         publish_get_future = shadow_client.publish_get_shadow(
-            request=iotshadow.GetShadowRequest(thing_name=args.thing_name),
+            request=iotshadow.GetShadowRequest(thing_name=args.led_thing_name),
             qos=mqtt.QoS.AT_LEAST_ONCE)
 
         # Ensure that publish succeeds
