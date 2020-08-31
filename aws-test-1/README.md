@@ -152,7 +152,8 @@ LED device subscribes to republished messages and lights the device LEDs based o
 
 
 #### Command Line (button device)
-```python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8EXAMPLEmbb-ats.iot.us-west-2.amazonaws.com
+```
+python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8EXAMPLEmbb-ats.iot.us-west-2.amazonaws.com
 ```
 
 #### Command Line (LED device)
