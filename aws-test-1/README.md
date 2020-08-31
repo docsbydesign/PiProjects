@@ -134,13 +134,13 @@ LED device subscribes to button-pressed messages and lights the device LEDs base
 
 
 #### Command Line (button device)
-'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+```
 
 #### Command Line (LED device)
-'''
+```
 python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```
 
 ### AWS IoT Learn Demo (Step 1 - with Rule)
 
@@ -152,13 +152,13 @@ LED device subscribes to republished messages and lights the device LEDs based o
 
 
 #### Command Line (button device)
-'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+```
 
 #### Command Line (LED device)
-'''
+```
 python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --led-state-topic 'demo_service/buttons/led_state/desired' --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```
 
 ## AWS IoT Learn Demo (Step 2)
 
@@ -171,13 +171,13 @@ On the button device, the LEDs will match the button pressed. On the LED device,
 Add the rules in iot-demo-step-2.json and enable them. Disable all other rules that use the demo message topics.
 
 #### Command Line (button device)
-'''python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
+```
 
 #### Command Line (LED device)
-'''
+```
 python iot-demo-step-1.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --led-state-topic 'demo_service/buttons/led_state/desired' --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```
 
 ## AWS IoT Learn Demo (Step 3)
 
@@ -220,11 +220,11 @@ This program runs on both a button device and an led device.
   * **republish** `demo_device/buttons/led_state/reported` (led state object)
 
 #### Command Line (button device)
-'''
+```
 python iot-demo-step-4.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id buttons --thing-name buttons_demo_device --led-thing-name leds_demo_device --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```
 
 #### Command Line (LED device)
-'''
+```
 python iot-demo-step-4.py --root-ca ~/certs/Amazon-root-CA-1.pem --cert ~/certs/device.pem.crt --key ~/certs/private.pem.key --client-id leds --thing-name leds_demo_device --endpoint a2c8hebznynmbb-ats.iot.us-west-2.amazonaws.com
-'''
+```
