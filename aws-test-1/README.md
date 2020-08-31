@@ -204,7 +204,7 @@ This program runs on both a button device and an led device.
   * Publish the button state in topic `demo_device/buttons/led_state/desired`. The message payload has the desired state of the LEDs.
 
 #### On the led device
-* subscribe to:
+* Subscribe to:
   * `$aws/things/leds_demo_device/shadow/get/accepted` (get shadow) to update the device to match current shadow state and then publish the reported state
   * `$aws/things/leds_demo_device/shadow/get/rejected` (get shadow) to display the error getting current shadow state
   * `$aws/things/leds_demo_device/shadow/update/delta` (shadow-delta) to update device to match desired shadow state and then publish the reported state
