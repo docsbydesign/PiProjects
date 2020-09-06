@@ -126,6 +126,18 @@ python shadow-led-1.py --thing-name MyIotThing --root-ca ~/certs/Amazon-root-CA-
    a. change_shadow_value(delta) # set the LED values to the delta msg value
 
 
+# AWS IoT Learn Demo examples
+
+The following example programs implement the different steps that
+the [Interactive tutorial](https://console.aws.amazon.com/iot/home#/tutorial-intro)
+demonstrates.
+
+* [Step 1](#aws-iot-learn-demo-step-1) &mdash; Demonstrates a simple message-based interaction between a control device and a display device.
+* [Step 1 with a rule](#aws-iot-learn-demo-step-1---with-rule) &mdash; Demonstrates a simple message-based interaction with a topic rule to translate the button-device message to the LED device message. This more accurately illustrates the interaction depicted in the interactive tutorial.
+* [Step 2](#aws-iot-learn-demo-step-2) &mdash; Demonstrates the topic rule interaction displayed in **Step 2** of the interactive tutorial. When enabled, the _**ChangeBlueToGreen**_ rule changes blue LED requests to green LED requests.
+* [Step 3](#aws-iot-learn-demo-step-3) &mdash; Demonstrates additional topic rule interactions that are added to the **Step 2** demo.
+* [step 4](#aws-iot-learn-demo-step-4) &mdash; Demonstrates how a device shadow is used to save the device state while the device is offline.
+
 ## AWS IoT Learn Demo (Step 1)
 
 Button device sends a message when a button is pressed and lights the device LEDs based on the message received. After updating the LEDs, the device sends a message reporting the current LED status.
